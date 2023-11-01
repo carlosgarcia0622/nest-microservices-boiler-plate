@@ -1,25 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { UsersModule } from './users.module';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(UsersModule);
-  
-  const microserviceTcp = app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.TCP,
+  const app = await NestFactory.create(AppModule);
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.RMQ,
     options: {
-    host: 'localhost',
-    port: 3001,
-    },
-    })
-
-  const microserviceMQTT = app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.MQTT,
-    options: {
-    host: 'mqtt://localhost',
-    port: 1883,
+      urls: ['amqps:localhost:5671'],
+      queue: 'users',
+      queueOptions: {
+        durable: true
+      },
     },
     });
-  await app.startAllMicroservices(); //Hybrid app, lisents tcp, and mqtt
+  await app.startAllMicroservices();
 }
 bootstrap();
